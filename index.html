@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BFC LIVE — Title Sequence Previz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,200;0,400;0,600;0,800;1,900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FA660E;
+  --ink:#000000;
+  --coal:#1D1D1D;
+  --ash:#D4D3D3;
+  --paper:#FFFFFF;
+  --page:#0A0A0A;
+  --panel:#121212;
+  --line:rgba(212,211,211,.13);
+  --line-hi:rgba(212,211,211,.28);
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--page);
+  color:var(--ash);
+  font-family:"Inter",system-ui,-apple-system,sans-serif;
+  font-weight:200;
+  -webkit-font-smoothing:antialiased;
+  padding:28px 24px 64px;
+}
+.wrap{max-width:1180px;margin:0 auto}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:22px}
+.eyebrow{
+  font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--orange);margin:0 0 8px;
+}
+h1{
+  font-weight:800;font-size:clamp(22px,3.2vw,34px);letter-spacing:-.02em;
+  color:var(--paper);margin:0;line-height:1;
+}
+h1 em{font-style:italic;font-weight:900;color:var(--orange)}
+.meta{font-family:var(--mono);font-size:11px;line-height:1.9;color:#6f6f6f;text-align:right}
+.meta b{color:var(--ash);font-weight:400}
+
+/* ---------- stage ---------- */
+.stage-shell{
+  position:relative;width:100%;aspect-ratio:16/9;
+  border:1px solid var(--line);background:#000;overflow:hidden;
+}
+#backdrop{position:absolute;inset:0}
+#backdrop.checker{
+  background-color:#2a2a2a;
+  background-image:
+    linear-gradient(45deg,#1a1a1a 25%,transparent 25%,transparent 75%,#1a1a1a 75%),
+    linear-gradient(45deg,#1a1a1a 25%,transparent 25%,transparent 75%,#1a1a1a 75%);
+  background-size:32px 32px;background-position:0 0,16px 16px;
+}
+.stage{
+  position:absolute;top:0;left:0;width:1920px;height:1080px;
+  transform-origin:0 0;
+}
+.layer{position:absolute;inset:0}
+.wipe{position:absolute;inset:0}
+#w1{background:var(--orange)}
+#w2{background:var(--ash)}
+#w3{background:var(--coal)}
+
+#globeWrap{position:absolute;width:394.96px;height:235.2px;top:422.4px;left:377.38px;perspective:1700px}
+#globe{width:100%;height:100%;transform-style:preserve-3d}
+#globe svg{display:block;width:100%;height:100%;overflow:visible}
+
+#wordWrap{position:absolute;width:725.4px;height:235.2px;top:422.4px;left:817.22px}
+#wordWrap svg{display:block;width:100%;height:100%;overflow:visible}
+
+#waves{position:absolute;inset:0;width:1920px;height:1080px}
+
+/* ---------- transport ---------- */
+.bar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:12px 14px;border:1px solid var(--line);border-top:none;background:var(--panel);
+}
+button{
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  background:transparent;color:var(--ash);border:1px solid var(--line-hi);
+  padding:7px 12px;cursor:pointer;transition:.14s;
+}
+button:hover{border-color:var(--orange);color:var(--paper)}
+button:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+button.on{background:var(--orange);border-color:var(--orange);color:#000;font-weight:600}
+.tc{
+  font-family:var(--mono);font-size:13px;color:var(--paper);font-variant-numeric:tabular-nums;
+  padding:0 4px;min-width:150px;
+}
+.tc span{color:#6f6f6f}
+.spacer{flex:1}
+.swatches{display:flex;gap:6px;align-items:center}
+.sw{width:24px;height:24px;border:1px solid var(--line-hi);cursor:pointer;padding:0}
+.sw.on{border-color:var(--orange);box-shadow:inset 0 0 0 2px #000}
+.lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6f6f6f}
+
+/* ---------- timeline ---------- */
+.tl{border:1px solid var(--line);border-top:none;background:var(--panel);padding:0 0 14px}
+.ruler{
+  position:relative;height:24px;border-bottom:1px solid var(--line);
+  margin:0 14px;cursor:pointer;
+}
+.tick{position:absolute;bottom:0;width:1px;height:6px;background:var(--line-hi)}
+.tick.maj{height:11px;background:#5a5a5a}
+.tick-lbl{
+  position:absolute;top:1px;font-family:var(--mono);font-size:9px;color:#5a5a5a;
+  transform:translateX(-50%);white-space:nowrap;
+}
+.tracks{margin:0 14px;position:relative}
+.track{
+  position:relative;height:26px;margin-top:5px;
+  border-bottom:1px solid rgba(212,211,211,.05);
+}
+.tname{
+  position:absolute;left:0;top:6px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.06em;color:#7a7a7a;width:132px;text-transform:uppercase;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.lane{position:absolute;left:140px;right:0;top:0;bottom:0}
+.clip{
+  position:absolute;top:4px;height:17px;border-radius:2px;
+  font-family:var(--mono);font-size:9px;line-height:17px;padding:0 6px;
+  color:#000;overflow:hidden;white-space:nowrap;letter-spacing:.05em;
+}
+#playhead{
+  position:absolute;top:0;bottom:0;width:1px;background:var(--orange);
+  pointer-events:none;z-index:5;
+}
+#playhead::before{
+  content:"";position:absolute;top:0;left:-5px;width:11px;height:7px;background:var(--orange);
+  clip-path:polygon(0 0,100% 0,50% 100%);
+}
+.scrubzone{position:absolute;left:140px;right:0;top:0;bottom:0;cursor:ew-resize}
+
+/* ---------- notes ---------- */
+.sheet{margin-top:34px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0;border:1px solid var(--line)}
+.cell{padding:18px 20px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cell h3{
+  font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--orange);margin:0 0 10px;font-weight:400;
+}
+.cell p{margin:0 0 9px;font-size:13.5px;line-height:1.62;color:#a5a5a5;font-weight:200}
+.cell p:last-child{margin-bottom:0}
+.cell b{color:var(--paper);font-weight:600}
+.cell code{font-family:var(--mono);font-size:11.5px;color:var(--ash);background:#1d1d1d;padding:1px 5px}
+.flag{border-left:2px solid var(--orange)}
+
+@media (max-width:640px){
+  body{padding:18px 12px 48px}
+  .tname{width:88px;font-size:9px}
+  .lane,.scrubzone{left:96px}
+  .meta{text-align:left}
+}
+@media (prefers-reduced-motion:reduce){
+  button{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <p class="eyebrow">Title sequence · previz v1 · 1920×1080 · alpha</p>
+    <h1>BFC <em>LIVE</em> — open &amp; close</h1>
+  </div>
+  <div class="meta">
+    <div><b>8.20s</b> · 246f @ 30fps</div>
+    <div>Deliverable <b>ProRes 4444</b> (straight alpha)</div>
+    <div>Space play · ← → step 1f · ⇧← ⇧→ step 10f</div>
+  </div>
+</header>
+
+<div class="stage-shell" id="shell">
+  <div id="backdrop" class="checker"></div>
+  <div class="stage" id="stage">
+    <div class="wipe" id="w1"></div>
+    <div class="wipe" id="w2"></div>
+    <div class="wipe" id="w3"></div>
+    <div class="layer" id="content">
+      <svg id="waves" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <clipPath id="cornerClip">
+            <rect x="1542.62" y="-60" width="600" height="516.8"/>
+          </clipPath>
+        </defs>
+        <g id="waveGroup" clip-path="url(#cornerClip)" fill="none" stroke="#FA660E" stroke-linecap="round"></g>
+      </svg>
+      <div id="wordWrap">
+        <svg viewBox="219.92 0 362.7 117.6" xmlns="http://www.w3.org/2000/svg"><path fill="#FA660E" fill-rule="nonzero" d="M 564.960938 23.375 L 442.898438 23.375 L 442.898438 17.195312 L 564.960938 17.195312 Z M 425.242188 81.136719 L 425.242188 34.851562 C 425.242188 25.101562 433.148438 17.195312 442.898438 17.195312 L 442.898438 23.375 C 436.558594 23.375 431.421875 28.511719 431.421875 34.851562 L 431.421875 81.136719 L 431.4375 81.726562 C 431.734375 87.59375 436.441406 92.300781 442.308594 92.597656 L 442.898438 92.613281 L 564.960938 92.613281 L 565.550781 92.597656 C 571.421875 92.300781 576.125 87.59375 576.421875 81.726562 L 576.4375 81.136719 L 576.4375 34.851562 C 576.4375 28.710938 571.613281 23.695312 565.550781 23.390625 L 564.960938 23.375 L 564.960938 17.195312 C 574.710938 17.195312 582.617188 25.101562 582.617188 34.851562 L 582.617188 81.136719 C 582.617188 90.886719 574.710938 98.792969 564.960938 98.792969 L 442.898438 98.792969 C 433.148438 98.792969 425.242188 90.886719 425.242188 81.136719"/>
+<path fill="#FFFFFF" fill-rule="nonzero" d="M 534.152344 76.433594 L 534.152344 38.871094 L 560.34375 38.871094 L 560.34375 46.246094 L 543.230469 46.246094 L 543.230469 53.949219 L 559.003906 53.949219 L 559.003906 61.339844 L 543.230469 61.339844 L 543.230469 69.058594 L 560.34375 69.058594 L 560.34375 76.433594 Z M 534.152344 76.433594"/>
+<path fill="#FFFFFF" fill-rule="nonzero" d="M 502.320312 38.871094 L 510.71875 66.382812 L 511.03125 66.382812 L 519.429688 38.871094 L 529.59375 38.871094 L 516.917969 76.433594 L 504.832031 76.433594 L 492.160156 38.871094 Z M 502.320312 38.871094"/>
+<path fill="#FFFFFF" fill-rule="nonzero" d="M 487.578125 76.433594 L 478.5 76.433594 L 478.5 38.871094 L 487.578125 38.871094 Z M 487.578125 76.433594"/>
+<path fill="#FFFFFF" fill-rule="nonzero" d="M 448.578125 76.433594 L 448.578125 38.871094 L 457.65625 38.871094 L 457.65625 69.058594 L 473.28125 69.058594 L 473.28125 76.433594 Z M 448.578125 76.433594"/>
+<path fill="#FA660E" fill-rule="nonzero" d="M 261.035156 73.820312 L 261.007812 73.835938 C 259.84375 74.386719 258.691406 74.628906 254.910156 74.628906 L 239.578125 74.628906 C 238.808594 74.628906 238.1875 74.007812 238.1875 73.238281 L 238.1875 67.550781 C 238.1875 66.78125 238.808594 66.160156 239.578125 66.160156 L 254.910156 66.160156 C 258.828125 66.160156 259.847656 66.347656 260.925781 66.914062 L 261.035156 66.96875 C 262.097656 67.449219 262.78125 68.777344 262.78125 70.355469 C 262.78125 71.980469 262.097656 73.339844 261.035156 73.820312 Z M 238.1875 46.664062 C 238.1875 45.898438 238.808594 45.273438 239.578125 45.273438 L 254.910156 45.273438 C 260.191406 45.273438 260.191406 46.753906 260.191406 48.632812 C 260.191406 50.507812 260.191406 51.988281 254.910156 51.988281 L 239.578125 51.988281 C 238.808594 51.988281 238.1875 51.367188 238.1875 50.597656 Z M 274.445312 57.8125 C 274.34375 57.742188 274.332031 57.597656 274.425781 57.515625 C 277.859375 54.421875 279.539062 50.640625 279.539062 46.042969 C 279.539062 39.472656 275.976562 33.667969 270.664062 31.59375 C 266.96875 30.078125 264.601562 29.933594 255.246094 29.933594 L 221.3125 29.933594 C 220.546875 29.933594 219.921875 30.558594 219.921875 31.324219 L 219.921875 88.578125 C 219.921875 89.347656 220.546875 89.96875 221.3125 89.96875 L 255.660156 89.96875 C 264.210938 89.96875 268.03125 89.613281 272.410156 87.613281 C 278.3125 85 282.128906 78.847656 282.128906 71.941406 C 282.128906 65.96875 279.433594 61.0625 274.445312 57.8125"/>
+<path fill="#FA660E" fill-rule="nonzero" d="M 289.132812 89.96875 L 304.414062 89.96875 C 305.238281 89.96875 305.902344 89.304688 305.902344 88.480469 L 305.902344 68.734375 C 305.902344 67.914062 306.570312 67.246094 307.394531 67.246094 L 336.496094 67.246094 C 337.316406 67.246094 337.984375 66.578125 337.984375 65.753906 L 337.984375 53.144531 C 337.984375 52.320312 337.316406 51.65625 336.496094 51.65625 L 307.394531 51.65625 C 306.570312 51.65625 305.902344 50.988281 305.902344 50.164062 L 305.902344 47.015625 C 305.902344 46.191406 306.570312 45.523438 307.394531 45.523438 L 339.335938 45.523438 C 340.160156 45.523438 340.824219 44.855469 340.824219 44.03125 L 340.824219 31.421875 C 340.824219 30.601562 340.160156 29.933594 339.335938 29.933594 L 289.132812 29.933594 C 288.308594 29.933594 287.640625 30.601562 287.640625 31.421875 L 287.640625 88.480469 C 287.640625 89.304688 288.308594 89.96875 289.132812 89.96875 Z M 289.132812 89.96875"/>
+<path fill="#FA660E" fill-rule="nonzero" d="M 397.496094 63.851562 C 396.730469 63.851562 396.042969 64.332031 395.78125 65.054688 L 395.703125 65.277344 C 392.746094 73.460938 388.277344 76.800781 380.269531 76.800781 C 375.445312 76.800781 371.304688 75.214844 368.304688 72.210938 C 365.300781 69.210938 363.714844 65.070312 363.714844 60.242188 C 363.714844 55.289062 365.339844 51.027344 368.414062 47.925781 C 371.484375 44.824219 375.703125 43.183594 380.605469 43.183594 C 387.945312 43.183594 392.730469 46.1875 395.230469 52.363281 L 395.316406 52.574219 C 395.59375 53.261719 396.261719 53.710938 397.003906 53.710938 L 412.6875 53.710938 C 413.859375 53.710938 414.726562 52.621094 414.464844 51.480469 L 414.367188 51.070312 C 413.035156 45.296875 410.304688 40.824219 405.523438 36.589844 C 399.132812 30.816406 390.980469 28.011719 380.605469 28.011719 C 370.019531 28.011719 361.015625 31.0625 354.574219 36.832031 C 348.058594 42.667969 344.613281 50.851562 344.613281 60.496094 C 344.613281 70.136719 348.140625 78.175781 354.792969 83.839844 C 360.984375 89.238281 369.558594 91.972656 380.269531 91.972656 C 399.203125 91.972656 410.953125 83.414062 415.195312 66.535156 L 415.296875 66.121094 C 415.585938 64.96875 414.71875 63.851562 413.53125 63.851562 Z M 397.496094 63.851562"/></svg>
+      </div>
+      <div id="globeWrap"><div id="globe">
+        <svg viewBox="0 0 197.48 117.6" xmlns="http://www.w3.org/2000/svg"><path fill="#FA660E" fill-rule="nonzero" d="M 31.160156 96.023438 C 35.167969 95.394531 39.332031 94.8125 43.621094 94.308594 C 45.601562 96.550781 47.769531 98.695312 50.140625 100.714844 C 53.382812 103.480469 56.898438 105.929688 60.621094 108.054688 C 50.089844 105.332031 40.402344 101.476562 32.039062 96.558594 C 31.742188 96.386719 31.449219 96.203125 31.160156 96.03125 Z M 24.933594 91.875 C 13.019531 83.101562 6.167969 72.53125 5.253906 61.410156 L 29.886719 61.410156 C 30.386719 71.515625 33.835938 81.15625 39.886719 89.609375 C 34.683594 90.269531 29.695312 91.03125 24.933594 91.875 M 24.933594 25.8125 C 29.695312 26.65625 34.683594 27.417969 39.886719 28.082031 C 33.835938 36.53125 30.386719 46.171875 29.886719 56.277344 L 5.253906 56.277344 C 6.167969 45.15625 13.019531 34.585938 24.933594 25.8125 M 32.050781 21.128906 C 40.414062 16.222656 50.097656 12.355469 60.632812 9.632812 C 56.90625 11.761719 53.390625 14.210938 50.148438 16.964844 C 47.777344 18.984375 45.609375 21.128906 43.628906 23.371094 C 39.339844 22.859375 35.175781 22.285156 31.167969 21.65625 C 31.457031 21.484375 31.75 21.300781 32.050781 21.128906 M 86.609375 111.738281 C 72.0625 109.363281 59.257812 102.808594 50.046875 93.597656 C 52.433594 93.355469 54.871094 93.132812 57.320312 92.925781 L 57.320312 87.777344 C 53.40625 88.101562 49.566406 88.472656 45.824219 88.886719 C 39.5 80.960938 35.605469 71.539062 35.042969 61.402344 L 57.28125 61.402344 L 57.28125 56.277344 L 35.042969 56.277344 C 35.605469 46.140625 39.5 36.722656 45.824219 28.792969 C 49.539062 29.207031 53.355469 29.570312 57.238281 29.894531 L 57.238281 24.746094 C 54.8125 24.539062 52.40625 24.324219 50.046875 24.082031 C 59.265625 14.878906 72.0625 8.324219 86.609375 5.941406 L 86.609375 0.28125 C 65.054688 1.84375 45.085938 7.53125 29.4375 16.71875 C 26.371094 18.519531 23.519531 20.425781 20.90625 22.421875 C 20.882812 22.4375 20.867188 22.453125 20.84375 22.46875 C 7.324219 32.773438 0 45.4375 0 58.84375 C 0 72.253906 7.324219 84.914062 20.835938 95.21875 C 20.859375 95.234375 20.875 95.253906 20.898438 95.269531 C 21.804688 95.957031 22.738281 96.632812 23.691406 97.296875 C 25.515625 98.5625 27.417969 99.789062 29.429688 100.972656 C 45.085938 110.15625 65.054688 115.851562 86.621094 117.40625 L 86.621094 111.738281 Z M 86.609375 111.738281"/>
+<path fill="#FA660E" fill-rule="nonzero" d="M 172.539062 91.875 C 167.777344 91.03125 162.789062 90.269531 157.585938 89.605469 C 163.636719 81.15625 167.089844 71.515625 167.585938 61.410156 L 192.21875 61.410156 C 191.304688 72.53125 184.453125 83.101562 172.539062 91.875 M 165.425781 96.550781 C 157.0625 101.460938 147.367188 105.324219 136.84375 108.046875 C 140.566406 105.921875 144.085938 103.46875 147.324219 100.707031 C 149.695312 98.6875 151.867188 96.542969 153.84375 94.300781 C 158.132812 94.8125 162.300781 95.382812 166.304688 96.011719 C 166.015625 96.1875 165.722656 96.367188 165.425781 96.542969 Z M 157.585938 28.082031 C 162.789062 27.417969 167.777344 26.65625 172.539062 25.8125 C 184.453125 34.585938 191.304688 45.15625 192.21875 56.277344 L 167.585938 56.277344 C 167.089844 46.171875 163.636719 36.53125 157.585938 28.082031 M 147.316406 16.972656 C 144.074219 14.210938 140.558594 11.757812 136.835938 9.640625 C 147.367188 12.363281 157.054688 16.21875 165.417969 21.136719 C 165.714844 21.308594 166.007812 21.492188 166.296875 21.667969 C 162.289062 22.296875 158.125 22.875 153.835938 23.378906 C 151.855469 21.136719 149.6875 18.992188 147.316406 16.972656 M 179.242188 24.539062 C 178.402344 23.835938 177.53125 23.148438 176.640625 22.460938 C 176.613281 22.445312 176.597656 22.425781 176.574219 22.410156 C 175.667969 21.722656 174.734375 21.046875 173.78125 20.382812 C 171.960938 19.117188 170.054688 17.890625 168.042969 16.71875 C 152.5625 7.628906 132.859375 1.960938 111.578125 0.328125 L 111.578125 6.074219 C 125.828125 8.546875 138.355469 15.035156 147.425781 24.089844 C 145.703125 24.265625 143.960938 24.429688 142.203125 24.589844 C 143.285156 26.050781 144.175781 27.675781 144.867188 29.488281 C 147.160156 29.273438 149.421875 29.039062 151.648438 28.792969 C 157.976562 36.722656 161.867188 46.140625 162.433594 56.277344 L 143.320312 56.277344 C 142.769531 57.1875 142.179688 58.050781 141.523438 58.8125 C 142.253906 59.597656 142.921875 60.464844 143.511719 61.402344 L 162.441406 61.402344 C 161.875 71.539062 157.984375 80.957031 151.65625 88.886719 C 149.355469 88.632812 147.003906 88.390625 144.632812 88.167969 C 143.910156 89.972656 143.035156 91.617188 141.988281 93.066406 C 143.824219 93.230469 145.640625 93.398438 147.433594 93.589844 C 138.371094 102.644531 125.835938 109.132812 111.59375 111.605469 L 111.59375 117.351562 C 132.878906 115.71875 152.570312 110.050781 168.050781 100.964844 C 171.128906 99.15625 173.972656 97.253906 176.589844 95.261719 C 176.605469 95.242188 176.632812 95.226562 176.648438 95.210938 C 177.539062 94.53125 178.410156 93.835938 179.25 93.140625 C 191.097656 83.234375 197.480469 71.359375 197.480469 58.835938 C 197.480469 46.3125 191.097656 34.445312 179.25 24.53125 Z M 179.242188 24.539062"/>
+<path fill="#FFFFFF" fill-rule="nonzero" d="M 120.519531 50.105469 C 119.273438 50.785156 117.925781 51.015625 114.183594 51.023438 L 81.4375 51.082031 L 81.421875 37.746094 L 113.695312 37.691406 L 114.003906 37.691406 C 117.492188 37.691406 118.433594 37.804688 119.648438 38.246094 C 121.757812 39.148438 123.015625 41.398438 123.015625 44.453125 C 123.015625 47.050781 122.058594 49.085938 120.519531 50.105469 M 119.9375 79.023438 C 118.691406 79.476562 117.925781 79.59375 113.984375 79.601562 L 81.464844 79.667969 L 81.445312 65.886719 L 113.488281 65.820312 L 113.894531 65.820312 C 117.859375 65.820312 118.617188 65.9375 119.730469 66.375 C 121.84375 67.277344 122.996094 69.53125 123.007812 72.804688 C 123.007812 75.96875 121.859375 78.238281 119.9375 79.03125 Z M 141.742188 75.023438 C 141.742188 65.8125 138.011719 60.566406 132.019531 58.84375 C 138.070312 57.480469 141.628906 51.304688 141.609375 41.472656 C 141.59375 31.871094 138.792969 26.789062 133.605469 23.636719 C 130.273438 21.742188 126.273438 20.953125 119 20.953125 L 118.808594 20.953125 L 106.429688 20.980469 L 106.429688 0 L 91.746094 0.0078125 L 91.746094 21.003906 L 64.769531 21.054688 C 63.4375 21.054688 62.367188 22.128906 62.375 23.445312 L 62.46875 94.019531 C 62.46875 95.34375 63.546875 96.410156 64.867188 96.410156 L 91.746094 96.363281 L 91.746094 117.597656 L 106.429688 117.589844 L 106.429688 96.335938 L 119.40625 96.304688 C 126.804688 96.289062 131.027344 95.492188 133.996094 93.679688 C 139.085938 90.511719 141.734375 83.839844 141.734375 75.023438 Z M 141.742188 75.023438"/></svg>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<div class="bar">
+  <button id="btnPlay">Play</button>
+  <button id="btnRestart">Restart</button>
+  <button id="btnLoop" class="on">Loop</button>
+  <div class="tc" id="tc">00:00:00:00 <span>/ 0.00s</span></div>
+  <div class="spacer"></div>
+  <span class="lbl">Backdrop</span>
+  <div class="swatches">
+    <button class="sw on" data-bg="checker" style="background:repeating-conic-gradient(#2a2a2a 0% 25%,#1a1a1a 0% 50%) 0/12px 12px" title="Transparency"></button>
+    <button class="sw" data-bg="#000000" style="background:#000" title="Black"></button>
+    <button class="sw" data-bg="#FFFFFF" style="background:#fff" title="White"></button>
+    <button class="sw" data-bg="#FA660E" style="background:#FA660E" title="Brand orange"></button>
+  </div>
+</div>
+
+<div class="tl">
+  <div class="ruler" id="ruler"></div>
+  <div class="tracks" id="tracks"></div>
+</div>
+
+<div class="sheet">
+  <div class="cell flag">
+    <h3>Assumption to confirm</h3>
+    <p>I don't have the <b>Colorway</b> project in front of me, so the wipes here are my read of the note: three concentric circles growing from a single origin at frame centre, staggered 7 frames apart, each brand colour stacking over the last — orange → <code>#D4D3D3</code> → <code>#1D1D1D</code>. The out is the same iris in reverse, top layer first.</p>
+    <p>If Colorway offsets the origins, uses an off-screen sweep, or runs a different colour order, tell me which and I'll re-cut it.</p>
+  </div>
+  <div class="cell">
+    <h3>Wipe origin</h3>
+    <p>The origin sits at <b>960, 540</b> — the exact point the globe flips in on. The colour arrives from where the mark will be, so the entrance reads as one gesture rather than two.</p>
+    <p>In AE: three shape layers, Ellipse path Size linked to one slider each, or a single Circle effect per solid with Radius keyframed. Slider is easier to re-time.</p>
+  </div>
+  <div class="cell">
+    <h3>Logo is matted by wipe 3</h3>
+    <p>The globe, wordmark and waves all sit inside the <code>#1D1D1D</code> circle as a track matte. That's what makes the reverse work for free — when the dark circle irises down, it takes the logo with it, and you're never animating logo opacity separately.</p>
+    <p>Set the content precomp's TrkMat to <b>Alpha Matte</b> on a duplicate of the wipe-3 shape layer.</p>
+  </div>
+  <div class="cell">
+    <h3>Flip</h3>
+    <p>Y rotation 180° → 0° over 26 frames on easeOutQuint, with scale 0.90 → 1.00 riding the same curve. Opacity is a 5-frame ramp only — the edge-on frames hide the pop.</p>
+    <p>Advanced 3D renderer, or just a 2D layer with a <code>cos()</code> scale-X expression if you want it cheap.</p>
+  </div>
+  <div class="cell">
+    <h3>Shift &amp; reveal</h3>
+    <p>Globe travels <b>−385px</b> (960 → 575 centre) over 29 frames, easeInOutCubic. The wordmark matte opens left-to-right over 32 frames. The globe sits <b>above</b> the type in z-order, so the first third of the reveal happens behind the globe and the letters look like they’re being dragged out from under it.</p>
+    <p>Matte here is a plain rectangle scaling on X from the wordmark's left edge — nothing fancier is needed.</p>
+  </div>
+  <div class="cell">
+    <h3>Radio wave</h3>
+    <p>Emitter at the LIVE box's top-right corner, <b>1542.62, 456.8</b>. Rings spawn every 19 frames, live 57 frames, radius 0 → 340 on easeOutCubic, stroke 7 → 1.5, opacity 0.85 → 0.</p>
+    <p>Masked to the upper-right quadrant of that corner, so nothing ever crosses back over the box. Holds ~3.3s before the wipe-out starts.</p>
+  </div>
+</div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+const FPS=30, DUR=8.20;
+
+// ---- timing (seconds) ----
+const T={
+  w1In:[0.00,0.80], w2In:[0.22,1.02], w3In:[0.44,1.24],
+  flip:[1.20,2.05], shift:[2.25,3.20], reveal:[2.30,3.35],
+  waves:[3.40,6.70],
+  w3Out:[6.70,7.50], w2Out:[6.92,7.72], w1Out:[7.14,7.94]
+};
+const TRACKS=[
+  {n:"wave · corner",   k:"waves", c:"#FA660E"},
+  {n:"wordmark matte",  k:"reveal",c:"#FA660E"},
+  {n:"globe",           k:"flip",  c:"#FFFFFF", extra:"shift"},
+  {n:"wipe 3 · 1D1D1D", k:"w3In",  c:"#8a8a8a", out:"w3Out"},
+  {n:"wipe 2 · D4D3D3", k:"w2In",  c:"#D4D3D3", out:"w2Out"},
+  {n:"wipe 1 · FA660E", k:"w1In",  c:"#FA660E", out:"w1Out"}
+];
+
+// ---- easing ----
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const eInOutQuart=p=>p<.5?8*p*p*p*p:1-Math.pow(-2*p+2,4)/2;
+const eInOutCubic=p=>p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+const eOutQuint=p=>1-Math.pow(1-p,5);
+const eOutCubic=p=>1-Math.pow(1-p,3);
+const span=(t,[a,b])=>cl((t-a)/(b-a),0,1);
+const lerp=(a,b,p)=>a+(b-a)*p;
+
+// ---- geometry ----
+const CX=960, CY=540, RMAX=1160;
+const GLOBE_X0=762.52, GLOBE_X1=377.38;
+const WAVE_CX=1542.62, WAVE_CY=456.8;
+const WAVE_INTERVAL=0.62, WAVE_LIFE=1.90, WAVE_RMAX=340;
+
+const $=s=>document.querySelector(s);
+const stage=$("#stage"), shell=$("#shell");
+const w1=$("#w1"), w2=$("#w2"), w3=$("#w3"), content=$("#content");
+const globeWrap=$("#globeWrap"), globe=$("#globe"), wordWrap=$("#wordWrap");
+const waveGroup=$("#waveGroup"), tcEl=$("#tc");
+
+function setIris(el,r){
+  const g=`radial-gradient(circle ${r.toFixed(1)}px at ${CX}px ${CY}px, #000 99.4%, transparent 100%)`;
+  el.style.webkitMaskImage=g; el.style.maskImage=g;
+}
+function quarter(cx,cy,r){
+  return `M ${cx} ${(cy-r).toFixed(2)} A ${r.toFixed(2)} ${r.toFixed(2)} 0 0 1 ${(cx+r).toFixed(2)} ${cy}`;
+}
+
+// ---- the whole sequence as a pure function of t ----
+function render(t){
+  // wipes: in radius minus out radius
+  const rads=[
+    lerp(0,RMAX,eInOutQuart(span(t,T.w1In))) * (1-eInOutQuart(span(t,T.w1Out))),
+    lerp(0,RMAX,eInOutQuart(span(t,T.w2In))) * (1-eInOutQuart(span(t,T.w2Out))),
+    lerp(0,RMAX,eInOutQuart(span(t,T.w3In))) * (1-eInOutQuart(span(t,T.w3Out)))
+  ];
+  setIris(w1,rads[0]); setIris(w2,rads[1]); setIris(w3,rads[2]);
+  setIris(content,rads[2]);           // logo lives inside wipe 3
+
+  // globe flip
+  const fp=span(t,T.flip), fe=eOutQuint(fp);
+  const rotY=180*(1-fe), sc=lerp(0.90,1,fe);
+  globe.style.transform=`rotateY(${rotY.toFixed(2)}deg) scale(${sc.toFixed(4)})`;
+  globe.style.opacity=(t<T.flip[0]?0:cl(fp/0.18,0,1)).toFixed(3);
+
+  // globe shift
+  globeWrap.style.left=lerp(GLOBE_X0,GLOBE_X1,eInOutCubic(span(t,T.shift))).toFixed(2)+"px";
+
+  // wordmark matte
+  const rv=eInOutQuart(span(t,T.reveal));
+  wordWrap.style.clipPath=`inset(0 ${((1-rv)*100).toFixed(2)}% 0 0)`;
+  wordWrap.style.webkitClipPath=wordWrap.style.clipPath;
+
+  // radio waves
+  let d="";
+  if(t>=T.waves[0]){
+    const n=Math.floor((Math.min(t,T.waves[1])-T.waves[0])/WAVE_INTERVAL);
+    for(let i=n;i>=0;i--){
+      const born=T.waves[0]+i*WAVE_INTERVAL;
+      const p=(t-born)/WAVE_LIFE;
+      if(p<0||p>1) continue;
+      const e=eOutCubic(p);
+      const r=WAVE_RMAX*e;
+      if(r<2) continue;
+      const fadeOut=cl((T.waves[1]+0.35-t)/0.55,0,1);   // stop emitting cleanly
+      const op=(0.85*(1-e)*fadeOut).toFixed(3);
+      const sw=lerp(7,1.5,e).toFixed(2);
+      d+=`<path d="${quarter(WAVE_CX,WAVE_CY,r)}" stroke-width="${sw}" opacity="${op}"/>`;
+    }
+  }
+  waveGroup.innerHTML=d;
+
+  // readout
+  const f=Math.round(t*FPS);
+  tcEl.innerHTML=`00:00:${String(Math.floor(f/FPS)).padStart(2,"0")}:${String(f%FPS).padStart(2,"0")} <span>/ ${t.toFixed(2)}s · f${f}</span>`;
+  $("#playhead").style.left=(t/DUR*100)+"%";
+}
+
+// ---- transport ----
+let t=0, playing=false, loop=true, last=0;
+const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function tick(ts){
+  if(!playing) return;
+  if(!last) last=ts;
+  t+=(ts-last)/1000; last=ts;
+  if(t>=DUR){ if(loop){t=0;} else {t=DUR; playing=false; $("#btnPlay").textContent="Play";} }
+  render(t);
+  requestAnimationFrame(tick);
+}
+function play(){ if(playing)return; if(t>=DUR)t=0; playing=true; last=0; $("#btnPlay").textContent="Pause"; requestAnimationFrame(tick); }
+function pause(){ playing=false; $("#btnPlay").textContent="Play"; }
+
+$("#btnPlay").onclick=()=>playing?pause():play();
+$("#btnRestart").onclick=()=>{t=0;render(0);if(!playing)play();};
+$("#btnLoop").onclick=e=>{loop=!loop;e.currentTarget.classList.toggle("on",loop);};
+
+document.querySelectorAll(".sw").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".sw").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  const v=b.dataset.bg, bd=$("#backdrop");
+  bd.classList.toggle("checker",v==="checker");
+  bd.style.background = v==="checker" ? "" : v;
+});
+
+// ---- timeline build ----
+const ruler=$("#ruler");
+for(let s=0;s<=Math.floor(DUR);s++){
+  const x=s/DUR*100;
+  ruler.insertAdjacentHTML("beforeend",
+    `<div class="tick maj" style="left:${x}%"></div><div class="tick-lbl" style="left:${x}%">${s}s</div>`);
+  for(let k=1;k<4;k++){
+    const xs=(s+k*0.25)/DUR*100; if(xs<100)
+    ruler.insertAdjacentHTML("beforeend",`<div class="tick" style="left:${xs}%"></div>`);
+  }
+}
+const tracks=$("#tracks");
+TRACKS.forEach(tr=>{
+  const segs=[[tr.k,tr.c]];
+  if(tr.extra) segs.push([tr.extra,tr.c]);
+  if(tr.out) segs.push([tr.out,tr.c]);
+  const bars=segs.map(([k,c])=>{
+    const [a,b]=T[k];
+    return `<div class="clip" style="left:${a/DUR*100}%;width:${(b-a)/DUR*100}%;background:${c};opacity:${k.endsWith("Out")?.55:1}">${Math.round(a*FPS)}–${Math.round(b*FPS)}f</div>`;
+  }).join("");
+  tracks.insertAdjacentHTML("beforeend",
+    `<div class="track"><div class="tname">${tr.n}</div><div class="lane">${bars}</div></div>`);
+});
+tracks.insertAdjacentHTML("beforeend",`<div class="scrubzone" id="scrub"><div id="playhead" style="left:0"></div></div>`);
+
+// ---- scrubbing ----
+let dragging=false;
+function scrubTo(clientX,el){
+  const r=el.getBoundingClientRect();
+  t=cl((clientX-r.left)/r.width,0,1)*DUR;
+  render(t);
+}
+["#scrub","#ruler"].forEach(sel=>{
+  const el=$(sel);
+  el.addEventListener("pointerdown",e=>{dragging=true;pause();el.setPointerCapture(e.pointerId);scrubTo(e.clientX,el);});
+  el.addEventListener("pointermove",e=>{if(dragging)scrubTo(e.clientX,el);});
+  el.addEventListener("pointerup",()=>dragging=false);
+  el.addEventListener("pointercancel",()=>dragging=false);
+});
+
+// ---- keys ----
+addEventListener("keydown",e=>{
+  if(e.code==="Space"){e.preventDefault();playing?pause():play();}
+  else if(e.code==="ArrowRight"){e.preventDefault();pause();t=cl(t+(e.shiftKey?10:1)/FPS,0,DUR);render(t);}
+  else if(e.code==="ArrowLeft"){e.preventDefault();pause();t=cl(t-(e.shiftKey?10:1)/FPS,0,DUR);render(t);}
+  else if(e.code==="Home"){e.preventDefault();pause();t=0;render(0);}
+});
+
+// ---- fit stage ----
+function fit(){
+  const s=shell.clientWidth/1920;
+  stage.style.transform=`scale(${s})`;
+}
+addEventListener("resize",fit); fit();
+
+render(0);
+if(!reduced) play(); else $("#btnPlay").textContent="Play";
+})();
+</script>
+</body>
+</html>
